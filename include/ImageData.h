@@ -27,12 +27,14 @@ class ImageData {
   const char* GetFileName() const;
   int GetWidth() const;
   int GetHeight() const;
+#if 0
   inline T GetPixel(int index) const {
     return (*m_data)[index];
   }
   inline void SetPixel(int index, T colour) {
     (*m_data)[index] = colour;
   }
+#endif
   // do not use m_data directly, please use macro GET_PIXEL, SET_PIXEL
   std::vector<T>* m_data;
 
@@ -100,26 +102,6 @@ template <class T>
 int ImageData<T>::GetHeight() const {
   return m_height;
 }
-
-#if 0
-template <class T>
-T ImageData<T>::GetPixel(int index) const {
-  if (IsIndexValid(index)) {
-    return (*m_data)[index];
-  }
-  printf("error: get pixel failed\n");
-  return 0;
-}
-
-template <class T>
-void ImageData<T>::SetPixel(int index, T colour) {
-  if (IsIndexValid(index)) {
-    (*m_data)[index] = colour;
-    return;
-  }
-  printf("error: set pixel failed\n");
-}
-#endif
 
 template <class T>
 bool ImageData<T>::IsIndexValid(int index) const {
