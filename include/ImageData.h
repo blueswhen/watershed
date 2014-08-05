@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdio.h>
 #include "include/utils.h"
+#include "include/colour.h"
 
 typedef unsigned char uchar;
 
@@ -27,6 +28,7 @@ class ImageData {
   const char* GetFileName() const;
   int GetWidth() const;
   int GetHeight() const;
+  int GetRandomSeed() const;
 #if 0
   inline T GetPixel(int index) const {
     return (*m_data)[index];
@@ -39,10 +41,10 @@ class ImageData {
   std::vector<T>* m_data;
 
  private:
-  bool IsIndexValid(int index) const;
   const char* m_file_name;
   int m_width;
   int m_height;
+  mutable int m_random_seed;
 };
 
 template <class T>
@@ -50,14 +52,16 @@ ImageData<T>::ImageData()
   : m_file_name(NULL)
   , m_width(0)
   , m_height(0)
-  , m_data(new std::vector<T>(0)) {}
+  , m_data(new std::vector<T>(0))
+  , m_random_seed(-1) {}
 
 template <class T>
 ImageData<T>::ImageData(const ImageData<T>& image_data)
   : m_file_name(image_data.m_file_name)
   , m_width(image_data.m_width)
   , m_height(image_data.m_height)
-  , m_data(new std::vector<T>(*(image_data.m_data))) {}
+  , m_data(new std::vector<T>(*(image_data.m_data)))
+  , m_random_seed(-1) {}
 
 template <class T>
 ImageData<T>::~ImageData() {
@@ -104,12 +108,20 @@ int ImageData<T>::GetHeight() const {
 }
 
 template <class T>
-bool ImageData<T>::IsIndexValid(int index) const {
-  if (index >= 0 && index < m_width * m_height) {
-    return true;
+int ImageData<T>::GetRandomSeed() const {
+  if (m_random_seed != -1) {
+    return m_random_seed;
   }
-  printf("error: the index is invalid\n");
-  return false;
+  if (m_data->size() == 0) {
+    m_random_seed = 0;
+    return m_random_seed;
+  }
+  int sum = 0;
+  for (int i = 0; i < m_data->size(); ++i) {
+    sum += static_cast<int>((*m_data)[i]) & BLUE;
+  }
+  m_random_seed = sum;
+  return m_random_seed;
 }
 
 #endif  // INCLUDE_IMAGEDATA_H_
