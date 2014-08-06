@@ -299,7 +299,7 @@ void Watershed(const ImageData<uchar>& grad_image, ImageData<int>* marked_image,
           mark_number = mark_value;
           SET_PIXEL(marked_image, mark_index, mark_number);
         } else if (mark_number != mark_value) {
-          SET_PIXEL(marked_image, mark_arrounds[i], WASHED);
+          SET_PIXEL(marked_image, mark_index, WASHED);
         }
       }
     }
