@@ -2,6 +2,7 @@
 #ifndef  INCLUDE_UTILS_H_
 #define  INCLUDE_UTILS_H_
 
+#include <vector>
 #include <math.h>
 
 typedef unsigned char uchar;
@@ -16,6 +17,14 @@ typedef unsigned char uchar;
   std::max(center_y - 1, 0) * width + std::max(center_x - 1, 0), \
   std::max(center_y - 1, 0) * width + center_x, \
   std::max(center_y - 1, 0) * width + std::min(center_x + 1, width - 1), \
+}
+
+#define FOUR_ARROUND_POSITION(center_x, center_y, width, height) \
+{ \
+  center_y * width + std::max(center_x - 1, 0), \
+  center_y * width + std::min(center_x + 1, width - 1), \
+  std::max(center_y - 1, 0) * width + center_x, \
+  std::min(center_y + 1, height - 1) * width + center_x, \
 }
 
 #define GET_THREE_COORDINATE(colour) \

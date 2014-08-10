@@ -13,7 +13,7 @@
 
 #define COMPONENTS 3
 #define WASHED 0xffffffff
-#define IN_QUEUE -2
+#define IN_QUEUE 0xffff0000
 
 typedef unsigned char uchar;
 
@@ -229,7 +229,8 @@ void MarkConnectedArea(const ImageData<uchar>& grad_image, ImageData<int>* marke
   }
 }
 
-void Watershed(const ImageData<uchar>& grad_image, ImageData<int>* marked_image, int start_gradient) {
+void Watershed(const ImageData<uchar>& grad_image, ImageData<int>* marked_image,
+               int start_gradient) {
   if (grad_image.IsEmpty()) {
     printf("error: the grad_image is empty\n");
     return;
@@ -243,8 +244,8 @@ void Watershed(const ImageData<uchar>& grad_image, ImageData<int>* marked_image,
       int mark_value = (*marked_image->m_data)[index];
       if (mark_value < 0 && mark_value != IN_QUEUE) {
         SET_PIXEL(marked_image, index, -mark_value);
-        int arrounds[8] = EIGHT_ARROUND_POSITION(x, y, width, height);
-        for (int i = 0; i < 8; i += 2) {
+        int arrounds[4] = FOUR_ARROUND_POSITION(x, y, width, height);
+        for (int i = 0; i < 4; ++i) {
           int arround_mark_value = (*marked_image->m_data)[arrounds[i]];
           if (arround_mark_value == 0) {
             int grad_value = (*grad_image.m_data)[arrounds[i]];
@@ -274,33 +275,37 @@ void Watershed(const ImageData<uchar>& grad_image, ImageData<int>* marked_image,
     int mark_index = grad_queues[queues_idx].front();
     grad_queues[queues_idx].pop();
     int mark_value = GET_PIXEL(marked_image, mark_index);
-    if (mark_value != IN_QUEUE) {
+    assert(mark_value == IN_QUEUE);
+
+    int mark_y = mark_index / width;
+    int mark_x = mark_index - mark_y * width;
+    int mark_arrounds[4] = FOUR_ARROUND_POSITION(mark_x, mark_y, width, height);
+
+    int mark_number = 0;
+    for (int i = 0; i < 4; ++i) {
+      int mark_value = GET_PIXEL(marked_image, mark_arrounds[i]);
+      if (mark_value != WASHED && mark_value != IN_QUEUE && mark_value != 0) {
+        if (mark_number == 0) {
+          mark_number = mark_value;
+          SET_PIXEL(marked_image, mark_index, mark_number);
+        } else if (mark_number != mark_value) {
+          SET_PIXEL(marked_image, mark_index, WASHED);
+          mark_number = WASHED;
+        }
+      }
+    }
+    if (mark_number == WASHED) {
       continue;
     }
 
-    int mark_number = 0;
-    int mark_y = mark_index / width;
-    int mark_x = mark_index - mark_y * width;
-    int mark_arrounds[8] = EIGHT_ARROUND_POSITION(mark_x, mark_y, width, height);
-    for (int i = 0; i < 8; i += 2) {
+    for (int i = 0; i < 4; ++i) {
       int mark_value = GET_PIXEL(marked_image, mark_arrounds[i]);
-      if (mark_value == WASHED || mark_value == IN_QUEUE) {
-        continue;
-      }
-
       if (mark_value == 0) {
         int grad_value = static_cast<int>((*grad_image.m_data)[mark_arrounds[i]]);
         assert(grad_value > start_gradient);
         grad_queues[grad_value].push(mark_arrounds[i]);
         queues_idx = std::min(queues_idx, grad_value);
         SET_PIXEL(marked_image, mark_arrounds[i], IN_QUEUE);
-      } else {
-        if (mark_number == 0) {
-          mark_number = mark_value;
-          SET_PIXEL(marked_image, mark_index, mark_number);
-        } else if (mark_number != mark_value) {
-          SET_PIXEL(marked_image, mark_index, WASHED);
-        }
       }
     }
   }
